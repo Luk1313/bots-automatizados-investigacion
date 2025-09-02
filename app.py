@@ -1,27 +1,37 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-from recommender import recommend
-from notifiers import notify_slack, notify_telegram, notify_whatsapp
+from loguru import logger
+from dotenv import load_dotenv
+import os
+from apscheduler.schedulers.background import BackgroundScheduler
+from alerts import notify_all
+from watchers import check_auth_log, check_docker_events, check_gmail_security_alerts, check_ms_signins
 
-app = FastAPI(title="EduDealsBot")
+load_dotenv()
+app = FastAPI(title="SecAlertBot")
 
-class Query(BaseModel):
-    bank: str
-    area: str | None = None
-    budget: int | None = None
-    modality: str | None = "online"
-    notify: bool = False
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+@app.on_event("startup")
+def _startup():
+    logger.info("SecAlertBot iniciado")
+    # Cada 60s: revisar auth.log
+    scheduler.add_job(check_auth_log, "interval", seconds=60, id="authlog")
+    # Cada 90s: eventos Docker
+    if os.getenv("DOCKER_ENABLED", "false").lower() == "true":
+        scheduler.add_job(check_docker_events, "interval", seconds=90, id="docker")
+    # Cada 180s: Gmail
+    if os.getenv("GMAIL_ENABLED", "false").lower() == "true":
+        scheduler.add_job(check_gmail_security_alerts, "interval", seconds=180, id="gmail")
+    # Cada 180s: Microsoft Graph
+    if os.getenv("MSGRAPH_ENABLED", "false").lower() == "true":
+        scheduler.add_job(check_ms_signins, "interval", seconds=180, id="msgraph")
 
 @app.get("/health")
 def health():
     return {"ok": True}
 
-@app.get("/recommend")
-def rec(bank: str, area: str | None = None, budget: int | None = None, modality: str | None = "online", notify: bool = False):
-    items = recommend(bank, area, budget, modality)
-    if notify and items:
-        lines = [f"🎓 {o.title} – {o.provider} (${o.price_clp} CLP, -{o.discount_pct}%) {o.url}" for o in items[:5]]
-        text = "*Recomendaciones educacionales:*
-" + "\n".join(lines)
-        notify_slack(text); notify_telegram(text); notify_whatsapp(text)
-    return {"results": [o.dict() for o in items]}
+@app.post("/test")
+def test():
+    notify_all("🔔 *Prueba de alerta* – SecAlertBot está operativo.")
+    return {"ok": True}
