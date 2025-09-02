@@ -1,38 +1,25 @@
-# 🤖 Bots Automatizados – Investigación
+# EduDealsBot – Asistente de descuentos en cursos y certificaciones
 
-Este repositorio recopila **cuestionarios, fundamentos, casos de uso y buenas prácticas** sobre **chatbots, asistentes virtuales e inteligencia conversacional**, con un enfoque aplicado a proyectos de **automatización y empleabilidad**.
+Asistente que **recomienda cursos/certificaciones** con foco en **descuentos y convenios** asociados a **bancos chilenos** (Santander, Banco de Chile, BancoEstado).
 
----
+## ¿Cómo funciona?
+- Fuente de ofertas en `data/offers/*.json` (puedes actualizar manualmente o automatizar scraping/ingesta).
+- Endpoint `/recommend` filtra por **banco**, **área** (ciberseguridad, data, IA, cloud), **presupuesto** y **modalidad**.
+- Notifica por **Slack/Telegram/WhatsApp** si lo deseas.
 
-## 📌 Objetivo
-Construir una **base de conocimiento estructurada** para el diseño, desarrollo e implementación de bots automatizados con y sin IA, integrando:
-
-- Fundamentos teóricos.  
-- Ejemplos prácticos.  
-- Cuestionarios resueltos.  
-- Flujos conversacionales documentados.  
-- Casos de uso aplicados a tareas reales (recordatorios, empleabilidad, soporte técnico).  
-
----
-
-## 🏗️ Estructura del Repositorio
-
+## Ejecutar
 ```bash
-bots-automatizados-investigacion/
-│
-├── docs/                        # Documentación de apoyo y cuestionarios
-│   ├── cuestionario_bots.md      # 10 preguntas resueltas sobre fundamentos
-│   ├── conceptos_basicos.md      # Principios clave de bots
-│   └── integraciones_api.md      # Notas sobre APIs (Google Calendar, Twilio, etc.)
-│
-├── examples/                    # Ejemplos de código y flujos
-│   ├── rule_based/               # Ejemplos de bots con reglas
-│   ├── ia_conversacional/        # Ejemplos con NLP (spaCy, Rasa, LangChain)
-│   └── integraciones/            # Automatización con APIs
-│
-├── roadmap/                     # Plan de evolución del proyecto
-│   └── fases.md                  # Roadmap con etapas de desarrollo
-│
-├── .gitignore
-├── LICENSE
-└── README.md                    # Este archivo
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app:app --reload --host 0.0.0.0 --port 8002
+```
+
+## Ejemplos
+```
+GET /recommend?bank=santander&area=ciberseguridad&budget=120000&modality=online
+```
+
+## Roadmap
+- Conector a newsletters por **Gmail API**.
+- Scrapers ligeros (RSS/API públicas) con `requests + BeautifulSoup`.
+- Panel simple para marcar vistos/favoritos (SQLite + FastAPI).
